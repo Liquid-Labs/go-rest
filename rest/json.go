@@ -4,6 +4,8 @@ import (
   "encoding/json"
   "fmt"
   "net/http"
+
+  "google.golang.org/appengine"
 )
 
 type standardResponse struct {
@@ -13,6 +15,9 @@ type standardResponse struct {
 
 func StandardResponse(w http.ResponseWriter, d interface{}, message string) (error) {
   w.Header().Set("Content-Type", "application/json")
+  if appengine.IsDevAppServer() {
+    w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+  }
 
   resp := standardResponse{Data: d, Message: message}
 
