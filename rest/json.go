@@ -7,20 +7,40 @@ import (
 )
 
 type standardResponse struct {
-  Data interface{} `json:"data"`
+  Data    interface{} `json:"data"`
+  Message string      `json:"message"`
 }
 
-func PackageResponse(w http.ResponseWriter, d interface{}) (error) {
-  resp := standardResponse{Data: d}
+func StandardResponse(w http.ResponseWriter, d interface{}, message string) (error) {
+  w.Header().Set("Content-Type", "application/json")
+
+  resp := standardResponse{Data: d, Message: message}
 
   var respBody []byte
   var err error
   if respBody, err = json.Marshal(resp); err != nil {
     // TODO: hide error and give reference number
-    http.Error(w, fmt.Sprintf("Could not format response: %v", err), 500)
+    errMessage := fmt.Sprintf("Could not format response: %v", err);
+    http.Error(w, message, 500)
+    // We will tyr and provide a message in the JSON
+    resp.Data = nil
+    resp.Message = errMessage;
+    if respBody, err = json.Marshal(resp); err == nil {
+      w.Write(respBody)
+    }
     return err
   }
   w.Write(respBody)
 
   return nil
+}
+
+func StandardServerError(w http.ResponseWriter, message string) {
+  w.Header().Set("Content-Type", "application/json")
+  // TODO: hide error and give reference number
+  resp := standardResponse{Data: nil, Message: message}
+  if respBody, err := json.Marshal(resp); err != nil {
+    w.Write(respBody)
+  }
+  http.Error(w, message, 500)
 }
