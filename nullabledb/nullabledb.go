@@ -40,6 +40,10 @@ func (ni *NullInt64) UnmarshalJSON(b []byte) error {
 	ni.Valid = (err == nil)
 	return err
 }
+
+func (ni* NullInt64) Native() *sql.NullInt64 {
+  return &sql.NullInt64{Int64: ni.Int64, Valid: ni.Valid}
+}
 // END: Null64Int handlers
 
 type NullBool sql.NullBool
@@ -70,6 +74,10 @@ func (nb *NullBool) UnmarshalJSON(b []byte) error {
 	err := json.Unmarshal(b, &nb.Bool)
 	nb.Valid = (err == nil)
 	return err
+}
+
+func (nb* NullBool) Native() *sql.NullBool {
+  return &sql.NullBool{Bool: nb.Bool, Valid: nb.Valid}
 }
 // END NullBool handlers
 
@@ -102,6 +110,10 @@ func (nf *NullFloat64) UnmarshalJSON(b []byte) error {
 	nf.Valid = (err == nil)
 	return err
 }
+
+func (nf* NullFloat64) Native() *sql.NullFloat64 {
+  return &sql.NullFloat64{Float64: nf.Float64, Valid: nf.Valid}
+}
 // END NullFloat64 handlers
 
 // NullString is an alias for sql.NullString data type
@@ -133,6 +145,10 @@ func (ns *NullString) UnmarshalJSON(b []byte) error {
 	err := json.Unmarshal(b, &ns.String)
 	ns.Valid = (err == nil)
 	return err
+}
+
+func (ns* NullString) Native() *sql.NullString {
+  return &sql.NullString{String: ns.String, Valid: ns.Valid}
 }
 // END NullString handlers
 
@@ -175,5 +191,9 @@ func (nt *NullTime) UnmarshalJSON(b []byte) error {
 	nt.Time = x
 	nt.Valid = true
 	return nil
+}
+
+func (nt* NullTime) Native() *mysql.NullTime {
+  return &mysql.NullTime{Time: nt.Time, Valid: nt.Valid}
 }
 // END NullTime handlers
