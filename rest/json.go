@@ -45,12 +45,14 @@ func StandardServerError(w http.ResponseWriter, message string) {
   http.Error(w, message, 500)
 }
 
-func HandlePost(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) {
+func HandlePost(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
   decoder := json.NewDecoder(r.Body)
 
   if err := decoder.Decode(d); err != nil {
     StandardServerError(w, fmt.Sprintf("Could not decode %s payload: %v", dDesc, err))
-    return
+    return err
   }
   defer r.Body.Close()
+
+  return nil
 }
