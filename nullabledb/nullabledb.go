@@ -1,16 +1,22 @@
 package nullabledb
 // Thanks to Supid Raval
 // https://gist.github.com/rsudip90/45fad7d8959c58bcc91d464873b50013
+// to get us started, though that code did not handle unmarshalling nulls
+// correctly. ;)
 
 import (
-        "database/sql"
-        "encoding/json"
-        "fmt"
-      	"reflect"
-      	"time"
+  "bytes"
+  "database/sql"
+  "encoding/json"
+  "fmt"
+	"reflect"
+	"time"
 
-        "github.com/go-sql-driver/mysql"
+  "github.com/go-sql-driver/mysql"
 )
+
+var nullJSON = []byte("null")
+var nullTime, _ = time.Parse(time.RFC3339, "0000-00-00T00:00:00Z00:00")
 
 type NullInt64 sql.NullInt64
 
@@ -30,14 +36,20 @@ func (ni *NullInt64) Scan(value interface{}) error {
 
 func (ni *NullInt64) MarshalJSON() ([]byte, error) {
 	if !ni.Valid {
-		return []byte("null"), nil
+		return nullJSON, nil
 	}
 	return json.Marshal(ni.Int64)
 }
 
 func (ni *NullInt64) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &ni.Int64)
-	ni.Valid = (err == nil)
+  var err error = nil
+  if bytes.Equal(nullJSON, b) {
+    ni.Int64 = 0
+    ni.Valid = false
+  } else {
+  	err = json.Unmarshal(b, &ni.Int64)
+  	ni.Valid = (err == nil)
+  }
 	return err
 }
 
@@ -65,14 +77,20 @@ func (nb *NullBool) Scan(value interface{}) error {
 
 func (nb *NullBool) MarshalJSON() ([]byte, error) {
 	if !nb.Valid {
-		return []byte("null"), nil
+		return nullJSON, nil
 	}
 	return json.Marshal(nb.Bool)
 }
 
 func (nb *NullBool) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &nb.Bool)
-	nb.Valid = (err == nil)
+  var err error = nil
+  if bytes.Equal(nullJSON, b) {
+    nb.Bool = false
+    nb.Valid = false
+  } else {
+  	err = json.Unmarshal(b, &nb.Bool)
+  	nb.Valid = (err == nil)
+  }
 	return err
 }
 
@@ -100,14 +118,20 @@ func (nf *NullFloat64) Scan(value interface{}) error {
 
 func (nf *NullFloat64) MarshalJSON() ([]byte, error) {
 	if !nf.Valid {
-		return []byte("null"), nil
+		return nullJSON, nil
 	}
 	return json.Marshal(nf.Float64)
 }
 
 func (nf *NullFloat64) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &nf.Float64)
-	nf.Valid = (err == nil)
+  var err error = nil
+  if bytes.Equal(nullJSON, b) {
+    nf.Float64 = 0.0
+    nf.Valid = false
+  } else {
+  	err = json.Unmarshal(b, &nf.Float64)
+  	nf.Valid = (err == nil)
+  }
 	return err
 }
 
@@ -136,14 +160,20 @@ func (ns *NullString) Scan(value interface{}) error {
 
 func (ns *NullString) MarshalJSON() ([]byte, error) {
 	if !ns.Valid {
-		return []byte("null"), nil
+		return nullJSON, nil
 	}
 	return json.Marshal(ns.String)
 }
 
 func (ns *NullString) UnmarshalJSON(b []byte) error {
-	err := json.Unmarshal(b, &ns.String)
-	ns.Valid = (err == nil)
+  var err error = nil
+  if bytes.Equal(nullJSON, b) {
+    ns.String = ""
+    ns.Valid = false
+  } else {
+  	err = json.Unmarshal(b, &ns.String)
+  	ns.Valid = (err == nil)
+  }
 	return err
 }
 
@@ -172,24 +202,29 @@ func (nt *NullTime) Scan(value interface{}) error {
 
 func (nt *NullTime) MarshalJSON() ([]byte, error) {
 	if !nt.Valid {
-		return []byte("null"), nil
+		return nullJSON, nil
 	}
 	val := fmt.Sprintf("\"%s\"", nt.Time.Format(time.RFC3339))
 	return []byte(val), nil
 }
 
 func (nt *NullTime) UnmarshalJSON(b []byte) error {
-	s := string(b)
-	// s = Stripchars(s, "\"")
+  if bytes.Equal(nullJSON, b) {
+    nt.Time = nullTime
+    nt.Valid = false
+  } else {
+  	s := string(b)
+  	// s = Stripchars(s, "\"")
 
-	x, err := time.Parse(time.RFC3339, s)
-	if err != nil {
-		nt.Valid = false
-		return err
-	}
+  	x, err := time.Parse(time.RFC3339, s)
+  	if err != nil {
+  		nt.Valid = false
+  		return err
+  	}
 
-	nt.Time = x
-	nt.Valid = true
+  	nt.Time = x
+  	nt.Valid = true
+  }
 	return nil
 }
 
