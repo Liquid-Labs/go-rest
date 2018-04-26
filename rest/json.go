@@ -20,14 +20,9 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string) (err
   var err error
   if respBody, err = json.Marshal(resp); err != nil {
     // TODO: hide error and give reference number
-    errMessage := fmt.Sprintf("Could not format response: %v", err);
-    http.Error(w, message, 500)
-    // We will tyr and provide a message in the JSON
-    resp.Data = nil
-    resp.Message = errMessage;
-    if respBody, err = json.Marshal(resp); err == nil {
-      w.Write(respBody)
-    }
+    errMessage := fmt.Sprintf("Could not format response: %v", err)
+    StandardServerError(w, errMessage)
+
     return err
   }
   w.Write(respBody)
@@ -36,13 +31,8 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string) (err
 }
 
 func StandardServerError(w http.ResponseWriter, message string) {
-  w.Header().Set("Content-Type", "application/json")
-  // TODO: hide error and give reference number
-  resp := standardResponse{Data: nil, Message: message}
-  if respBody, err := json.Marshal(resp); err != nil {
-    w.Write(respBody)
-  }
-  http.Error(w, message, 500)
+  // we tried returning JSON, and still want to eventually, but this is quicker
+  http.Error(w, message, http.StatusInternalServerError)
 }
 
 func HandlePost(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
