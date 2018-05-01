@@ -6,15 +6,23 @@ import (
   "net/http"
 )
 
-type standardResponse struct {
-  Data    interface{} `json:"data"`
-  Message string      `json:"message"`
+type PageInfo struct {
+  // 1-based index
+  CurrentPage    int64 `json:"currentPage"`
+  ItemsPerPage   int64 `json:"itemsPerPage"`
+  TotalItemCount int64 `json:"totalItemCount"`
 }
 
-func StandardResponse(w http.ResponseWriter, d interface{}, message string) (error) {
+type standardResponse struct {
+  Data     interface{} `json:"data"`
+  Message  string      `json:"message"`
+  PageInfo *PageInfo   `json:"pageData",omitempty`
+}
+
+func StandardResponse(w http.ResponseWriter, d interface{}, message string, pageInfo *PageInfo) (error) {
   w.Header().Set("Content-Type", "application/json")
 
-  resp := standardResponse{Data: d, Message: message}
+  resp := standardResponse{Data: d, Message: message, PageInfo: pageInfo}
 
   var respBody []byte
   var err error
