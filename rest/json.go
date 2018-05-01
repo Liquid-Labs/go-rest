@@ -3,6 +3,7 @@ package rest
 import (
   "encoding/json"
   "fmt"
+  "log"
   "net/http"
 )
 
@@ -39,6 +40,7 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string, page
 }
 
 func StandardServerError(w http.ResponseWriter, message string) {
+  log.Printf("ERROR: %s", message)
   // we tried returning JSON, and still want to eventually, but this is quicker
   http.Error(w, message, http.StatusInternalServerError)
 }
