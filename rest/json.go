@@ -39,10 +39,24 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string, page
   return nil
 }
 
+// TODO: deprecate / remove; uest use HandleError
 func StandardServerError(w http.ResponseWriter, message string) {
-  log.Printf("ERROR: %s", message)
+  HandleError(w, message, http.StatusInternalServerError)
+}
+
+// TODO: deprecate / remove; uest use HandleError
+func StandardAuthorizationError(w http.ResponseWriter) {
+  HandleError(w, "", http.StatusUnauthorized)
+}
+
+func HandleError(w http.ResponseWriter, msg string, code int) {
+  if code == http.StatusUnauthorized {
+    msg = "Unauthorized."
+  } else {
+    log.Printf("ERROR: %s", msg)
+  }
   // we tried returning JSON, and still want to eventually, but this is quicker
-  http.Error(w, message, http.StatusInternalServerError)
+  http.Error(w, msg, code)
 }
 
 func HandlePost(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
