@@ -182,7 +182,7 @@ func (ns* NullString) Native() *sql.NullString {
 }
 // END NullString handlers
 
-// NullTime is an alias for mysql.NullTime data type
+// TODO: This should be NullTimestamp
 type NullTime mysql.NullTime
 
 func (nt *NullTime) Scan(value interface{}) error {
@@ -232,3 +232,55 @@ func (nt* NullTime) Native() *mysql.NullTime {
   return &mysql.NullTime{Time: nt.Time, Valid: nt.Valid}
 }
 // END NullTime handlers
+/* Partially working... but just using NullString for 'DATE' values for now.
+type NullDate mysql.NullTime
+
+func (nt *NullDate) Scan(value interface{}) error {
+	var t mysql.NullTime
+	if err := t.Scan(value); err != nil {
+		return err
+	}
+
+	if reflect.TypeOf(value) == nil {
+		*nt = NullDate{t.Time, false}
+	} else {
+		*nt = NullDate{t.Time, true}
+	}
+
+	return nil
+}
+
+func (nt *NullDate) MarshalJSON() ([]byte, error) {
+	if !nt.Valid {
+		return nullJSON, nil
+	}
+	val := fmt.Sprintf("\"%d-%d-%d\"", nt.Time.Year(), nt.Time.Month(), nt.Time.Day())
+  log.Printf("marshal val: " + val)
+	return []byte(val), nil
+}
+
+func (nt *NullDate) UnmarshalJSON(b []byte) error {
+  if bytes.Equal(nullJSON, b) {
+    nt.Time = nullTime
+    nt.Valid = false
+  } else {
+  	s := string(b)
+  	s = strings.Trim(s, "\"")
+    bits := strings.Split(s, "-");
+  	x, err := time.Date(strconv.ParseInt(bits[0], 10, 0), strconv(bits[1], 10, 0), strconv.ParseInt(bits[2], 10, 0))
+    log.Printf("parsed date: %+v" + x);
+  	if err != nil {
+  		nt.Valid = false
+  		return err
+  	}
+
+  	nt.Time = x
+  	nt.Valid = true
+  }
+	return nil
+}
+
+func (nt* NullDate) Native() *mysql.NullTime {
+  return &mysql.NullTime{Time: nt.Time, Valid: nt.Valid}
+}*/
+// END NullDate handlers
