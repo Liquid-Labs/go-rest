@@ -10,6 +10,8 @@ import (
   "encoding/json"
   "fmt"
 	"reflect"
+  "regexp"
+  "strconv"
 	"time"
 
   "github.com/go-sql-driver/mysql"
@@ -232,55 +234,71 @@ func (nt* NullTime) Native() *mysql.NullTime {
   return &mysql.NullTime{Time: nt.Time, Valid: nt.Valid}
 }
 // END NullTime handlers
-/* Partially working... but just using NullString for 'DATE' values for now.
-type NullDate mysql.NullTime
+
+// Date is 'timezone-less' so we base if off string as all we care about is
+// YYYY-MM-DD format.
+type NullDate sql.NullString
+var dateRegexp *regexp.Regexp = regexp.MustCompile(`((\d{4})[\.-](\d\d)[\.-](\d\d))`)
 
 func (nt *NullDate) Scan(value interface{}) error {
-	var t mysql.NullTime
-	if err := t.Scan(value); err != nil {
+	var s sql.NullString
+	if err := s.Scan(value); err != nil {
 		return err
 	}
 
 	if reflect.TypeOf(value) == nil {
-		*nt = NullDate{t.Time, false}
+		*nt = NullDate{s.String, false}
 	} else {
-		*nt = NullDate{t.Time, true}
+    matches := dateRegexp.FindStringSubmatch(s.String)
+    // Any invalid date results in an error.
+    if matches == nil {
+      return fmt.Errorf("'%s' does not parse as a date.", s.String)
+    }
+    var year, month, day int64
+    var err error
+    if year, err = strconv.ParseInt(matches[2], 10, 32); err != nil {
+      return fmt.Errorf("'%s' does not parse as a date.", s.String)
+    }
+    if month, err = strconv.ParseInt(matches[3], 10, 32); err != nil {
+      return fmt.Errorf("'%s' does not parse as a date.", s.String)
+    }
+    if day, err = strconv.ParseInt(matches[4], 10, 32); err != nil {
+      return fmt.Errorf("'%s' does not parse as a date.", s.String)
+    }
+    // We use this to test that the string hits a valid day
+    testTime := time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC)
+
+    // 'Date' normalizes, but we don't.
+    if int(year) != testTime.Year() || time.Month(month) != testTime.Month() || int(day) != testTime.Day() {
+      return fmt.Errorf("'%s' specifies a non-existent date (e.g., '2000-10-32').", s.String)
+    }
+    // Pull out just the 'YYYY-MM-DD' part; 'nt.String' will come in from MySQL with 'T00:00:00Z' on the end.
+		*nt = NullDate{matches[1], true}
 	}
 
 	return nil
 }
 
-func (nt *NullDate) MarshalJSON() ([]byte, error) {
-	if !nt.Valid {
-		return nullJSON, nil
-	}
-	val := fmt.Sprintf("\"%d-%d-%d\"", nt.Time.Year(), nt.Time.Month(), nt.Time.Day())
-  log.Printf("marshal val: " + val)
-	return []byte(val), nil
-}
-
-func (nt *NullDate) UnmarshalJSON(b []byte) error {
-  if bytes.Equal(nullJSON, b) {
-    nt.Time = nullTime
-    nt.Valid = false
-  } else {
-  	s := string(b)
-  	s = strings.Trim(s, "\"")
-    bits := strings.Split(s, "-");
-  	x, err := time.Date(strconv.ParseInt(bits[0], 10, 0), strconv(bits[1], 10, 0), strconv.ParseInt(bits[2], 10, 0))
-    log.Printf("parsed date: %+v" + x);
-  	if err != nil {
-  		nt.Valid = false
-  		return err
-  	}
-
-  	nt.Time = x
-  	nt.Valid = true
+func (nd *NullDate) MarshalJSON() ([]byte, error) {
+  if !nd.Valid {
+    return nullJSON, nil
   }
-	return nil
+  return json.Marshal(nd.String)
 }
 
-func (nt* NullDate) Native() *mysql.NullTime {
-  return &mysql.NullTime{Time: nt.Time, Valid: nt.Valid}
-}*/
+func (nd *NullDate) UnmarshalJSON(b []byte) error {
+  var err error = nil
+  if bytes.Equal(nullJSON, b) {
+    nd.String = ""
+    nd.Valid = false
+  } else {
+    err = json.Unmarshal(b, &nd.String)
+    nd.Valid = (err == nil)
+  }
+  return err
+}
+
+func (nd* NullDate) Native() *sql.NullString {
+  return &sql.NullString{String: nd.String, Valid: nd.Valid}
+}
 // END NullDate handlers
