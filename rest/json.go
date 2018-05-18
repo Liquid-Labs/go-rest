@@ -59,11 +59,11 @@ func HandleError(w http.ResponseWriter, msg string, code int) {
   http.Error(w, msg, code)
 }
 
-func HandlePost(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
+func ExtractJson(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
   decoder := json.NewDecoder(r.Body)
 
   if err := decoder.Decode(d); err != nil {
-    StandardServerError(w, fmt.Sprintf("Could not decode %s payload: %v", dDesc, err))
+    HandleError(w, fmt.Sprintf("Could not decode %s payload: %v", dDesc, err), http.StatusBadRequest)
     return err
   }
   defer r.Body.Close()
