@@ -12,6 +12,7 @@ import (
 	"reflect"
   "regexp"
   "strconv"
+  "strings"
 	"time"
 
   "github.com/go-sql-driver/mysql"
@@ -216,7 +217,7 @@ func (nt *NullTime) UnmarshalJSON(b []byte) error {
     nt.Valid = false
   } else {
   	s := string(b)
-  	// s = Stripchars(s, "\"")
+  	s = strings.Trim(s, "\"")
 
   	x, err := time.Parse(time.RFC3339, s)
   	if err != nil {
