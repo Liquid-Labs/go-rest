@@ -28,45 +28,69 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string, page
   var respBody []byte
   var err error
   if respBody, err = json.Marshal(resp); err != nil {
-    // TODO: hide error and give reference number
-    errMessage := fmt.Sprintf("Could not format response: %v", err)
-    StandardServerError(w, errMessage)
+    restErr := ServerError("Could not format response.", err)
+    HandleError(w, restErr)
 
-    return err
+    return restErr
   }
   w.Write(respBody)
 
   return nil
 }
 
-// TODO: deprecate / remove; uest use HandleError
-func StandardServerError(w http.ResponseWriter, message string) {
-  HandleError(w, message, http.StatusInternalServerError)
-}
-
-// TODO: deprecate / remove; uest use HandleError
-func StandardAuthorizationError(w http.ResponseWriter) {
-  HandleError(w, "", http.StatusUnauthorized)
-}
-
-func HandleError(w http.ResponseWriter, msg string, code int) {
-  if code == http.StatusUnauthorized {
-    msg = "Unauthorized."
-  } else {
-    log.Printf("ERROR: %s", msg)
+func HandleError(w http.ResponseWriter, err RestError) {
+  // Note that ultimately, we want to encode the error in JSON, but it was
+  // proving problematic, so for now it's just text.
+  if err.Code() == http.StatusInternalServerError {
+    // TODO: hide error and give reference number
+    log.Printf("ERROR: %+v", err.Cause()) // Log server/untyped errors.
   }
-  // we tried returning JSON, and still want to eventually, but this is quicker
-  http.Error(w, msg, code)
+
+  http.Error(w, err.Error(), err.Code())
 }
 
 func ExtractJson(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
   decoder := json.NewDecoder(r.Body)
 
   if err := decoder.Decode(d); err != nil {
-    HandleError(w, fmt.Sprintf("Could not decode %s payload: %v", dDesc, err), http.StatusBadRequest)
+    HandleError(w, UnprocessableEntityError(fmt.Sprintf("Could not decode payload: %s", dDesc), err))
     return err
   }
   defer r.Body.Close()
 
   return nil
+}
+
+type RestError interface {
+  Error() string
+  Code() int
+  Cause() error
+}
+
+type errorData struct {
+  message string
+  code int
+  cause error
+}
+func (e errorData) Error() string {
+  return e.message
+}
+func (e errorData) Code() int {
+  return e.code
+}
+func (e errorData) Cause() error {
+  return e.cause
+}
+
+func BadRequestError(message string, cause error) errorData {
+  return errorData{message, http.StatusBadRequest, cause}
+}
+func AuthorizationError(message string, cause error) errorData {
+  return errorData{message, http.StatusUnauthorized, cause}
+}
+func UnprocessableEntityError(message string, cause error) errorData {
+  return errorData{message, http.StatusUnprocessableEntity, cause}
+}
+func ServerError(message string, cause error) errorData  {
+  return errorData{message, http.StatusInternalServerError, cause}
 }
