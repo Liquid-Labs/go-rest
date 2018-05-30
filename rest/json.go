@@ -2,9 +2,11 @@ package rest
 
 import (
   "encoding/json"
+  "errors"
   "fmt"
   "log"
   "net/http"
+  "runtime"
 )
 
 type PageInfo struct {
@@ -82,15 +84,19 @@ func (e errorData) Cause() error {
   return e.cause
 }
 
+func annotateError(cause error) error {
+  pc, fn, line, _ := runtime.Caller(2) // '1' is the error creation func
+  return errors.New(fmt.Sprintf("(%s[%s:%d]) %s", runtime.FuncForPC(pc).Name(), fn, line, cause))
+}
 func BadRequestError(message string, cause error) errorData {
-  return errorData{message, http.StatusBadRequest, cause}
+  return errorData{message, http.StatusBadRequest, annotateError(cause)}
 }
 func AuthorizationError(message string, cause error) errorData {
-  return errorData{message, http.StatusUnauthorized, cause}
+  return errorData{message, http.StatusUnauthorized, annotateError(cause)}
 }
 func UnprocessableEntityError(message string, cause error) errorData {
-  return errorData{message, http.StatusUnprocessableEntity, cause}
+  return errorData{message, http.StatusUnprocessableEntity, annotateError(cause)}
 }
 func ServerError(message string, cause error) errorData  {
-  return errorData{message, http.StatusInternalServerError, cause}
+  return errorData{message, http.StatusInternalServerError, annotateError(cause)}
 }
