@@ -85,7 +85,9 @@ func (e errorData) Cause() error {
 }
 
 func annotateError(cause error) error {
-  pc, fn, line, _ := runtime.Caller(2) // '1' is the error creation func
+  // '1' is the 'annotateError' call itself
+  // '2' is the error creation point
+  pc, fn, line, _ := runtime.Caller(2)
   return errors.New(fmt.Sprintf("(%s[%s:%d]) %s", runtime.FuncForPC(pc).Name(), fn, line, cause))
 }
 func BadRequestError(message string, cause error) errorData {
