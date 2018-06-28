@@ -7,13 +7,23 @@ import (
   "log"
   "net/http"
   "runtime"
+
+  "google.golang.org/appengine"
 )
 
 type PageInfo struct {
   // 1-based index
-  CurrentPage    int64 `json:"currentPage"`
+  PageIndex      int64 `json:"pageIndex"`
   ItemsPerPage   int64 `json:"itemsPerPage"`
   TotalItemCount int64 `json:"totalItemCount"`
+  TotalPageCount int64 `json:"totalPageCount"`
+}
+
+type SearchParams struct {
+  Scopes   []string  `json:"scopes"`
+  Terms    []string  `json:"terms"`
+  Sort     string    `json:"sort"`
+  PageInfo *PageInfo `json:"pageInfo"`
 }
 
 type standardResponse struct {
@@ -46,6 +56,9 @@ func HandleError(w http.ResponseWriter, err RestError) {
   if err.Code() == http.StatusInternalServerError {
     // TODO: hide error and give reference number
     log.Printf("ERROR: %+v", err.Cause()) // Log server/untyped errors.
+  } else if appengine.IsDevAppServer() {
+    log.Printf("%+v", err)
+    log.Printf("%+v", err.Cause())
   }
 
   http.Error(w, err.Error(), err.Code())
@@ -85,6 +98,9 @@ func (e errorData) Cause() error {
 }
 
 func annotateError(cause error) error {
+  if cause == nil {
+    return nil
+  }
   // '1' is the 'annotateError' call itself
   // '2' is the error creation point
   pc, fn, line, _ := runtime.Caller(2)
