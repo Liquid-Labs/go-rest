@@ -2,29 +2,12 @@ package rest
 
 import (
   "encoding/json"
-  "errors"
   "fmt"
   "log"
   "net/http"
-  "runtime"
 
   "google.golang.org/appengine"
 )
-
-type PageInfo struct {
-  // 1-based index
-  PageIndex      int   `json:"pageIndex"`
-  ItemsPerPage   int   `json:"itemsPerPage"`
-  TotalItemCount int64 `json:"totalItemCount"`
-  TotalPageCount int64 `json:"totalPageCount"`
-}
-
-type SearchParams struct {
-  Scopes   []string  `json:"scopes"`
-  Terms    []string  `json:"terms"`
-  Sort     string    `json:"sort"`
-  PageInfo *PageInfo `json:"pageInfo"`
-}
 
 type standardResponse struct {
   Data         interface{}   `json:"data"`
@@ -74,47 +57,4 @@ func ExtractJson(w http.ResponseWriter, r *http.Request, d interface{}, dDesc st
   defer r.Body.Close()
 
   return nil
-}
-
-type RestError interface {
-  Error() string
-  Code() int
-  Cause() error
-}
-
-type errorData struct {
-  message string
-  code int
-  cause error
-}
-func (e errorData) Error() string {
-  return e.message
-}
-func (e errorData) Code() int {
-  return e.code
-}
-func (e errorData) Cause() error {
-  return e.cause
-}
-
-func annotateError(cause error) error {
-  if cause == nil {
-    return nil
-  }
-  // '1' is the 'annotateError' call itself
-  // '2' is the error creation point
-  pc, fn, line, _ := runtime.Caller(2)
-  return errors.New(fmt.Sprintf("(%s[%s:%d]) %s", runtime.FuncForPC(pc).Name(), fn, line, cause))
-}
-func BadRequestError(message string, cause error) errorData {
-  return errorData{message, http.StatusBadRequest, annotateError(cause)}
-}
-func AuthorizationError(message string, cause error) errorData {
-  return errorData{message, http.StatusUnauthorized, annotateError(cause)}
-}
-func UnprocessableEntityError(message string, cause error) errorData {
-  return errorData{message, http.StatusUnprocessableEntity, annotateError(cause)}
-}
-func ServerError(message string, cause error) errorData  {
-  return errorData{message, http.StatusInternalServerError, annotateError(cause)}
 }
