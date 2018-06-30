@@ -33,7 +33,7 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string, sear
   return nil
 }
 
-func HandleError(w http.ResponseWriter, err RestError) {
+func HandleError(w http.ResponseWriter, err RestError) (RestError) {
   // Note that ultimately, we want to encode the error in JSON, but it was
   // proving problematic, so for now it's just text.
   if err.Code() == http.StatusInternalServerError {
@@ -45,6 +45,8 @@ func HandleError(w http.ResponseWriter, err RestError) {
   }
 
   http.Error(w, err.Error(), err.Code())
+
+  return err
 }
 
 func ExtractJson(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
