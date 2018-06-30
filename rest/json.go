@@ -13,8 +13,8 @@ import (
 
 type PageInfo struct {
   // 1-based index
-  PageIndex      int64 `json:"pageIndex"`
-  ItemsPerPage   int64 `json:"itemsPerPage"`
+  PageIndex      int   `json:"pageIndex"`
+  ItemsPerPage   int   `json:"itemsPerPage"`
   TotalItemCount int64 `json:"totalItemCount"`
   TotalPageCount int64 `json:"totalPageCount"`
 }
@@ -27,15 +27,15 @@ type SearchParams struct {
 }
 
 type standardResponse struct {
-  Data     interface{} `json:"data"`
-  Message  string      `json:"message"`
-  PageInfo *PageInfo   `json:"pageData",omitempty`
+  Data         interface{}   `json:"data"`
+  Message      string        `json:"message"`
+  SearchParams *SearchParams `json:"searchParams",omitempty`
 }
 
-func StandardResponse(w http.ResponseWriter, d interface{}, message string, pageInfo *PageInfo) (error) {
+func StandardResponse(w http.ResponseWriter, d interface{}, message string, searchParams *SearchParams) (error) {
   w.Header().Set("Content-Type", "application/json")
 
-  resp := standardResponse{Data: d, Message: message, PageInfo: pageInfo}
+  resp := standardResponse{Data: d, Message: message, SearchParams: searchParams}
 
   var respBody []byte
   var err error
