@@ -79,21 +79,20 @@ func (sp *SearchParams) SetTotalPages(count int64) {
     sp.PageInfo = &PageInfo{PageIndex: int(pageIndex), ItemsPerPage: int(itemsPerPage), TotalItemCount: count, TotalPageCount: pageCount}
 }
 
-func ProcessSearchParams(searchParams *SearchParams) (string, string, string, []interface{}, RestError) {
+func ProcessSearchParams(queryBase string, whereBase string, searchParams *SearchParams, params []interface{}) (string, []interface{}, RestError) {
   if len(searchParams.Scopes) > 1 {
-    return "", "", "", nil, BadRequestError("We currently only support a single scope.", nil)
+    return "", nil, BadRequestError("We currently only support a single scope.", nil)
   } else if (len(searchParams.Scopes) == 0) {
-    return "", "", "", nil, BadRequestError("No scope specified.", nil)
+    return "", nil, BadRequestError("No scope specified.", nil)
   }
 
   customJoin := ""
   customWhere := ""
-  params := make([]interface{}, 0)
 
   if searchParams.Scopes[0] == "Active" {
     customJoin = "JOIN packages p ON p.customer_id=c.id AND p.status IN ('CREATED', 'REJECTED', 'ACCEPTED', 'PACKAGED', 'PICKED_UP', 'SORTED', 'OUT_FOR_DELIVERY') "
   } else if searchParams.Scopes[0] != "All" {
-    return "", "", "", nil, BadRequestError(fmt.Sprintf("Found unknown scope: '%s'.", searchParams.Scopes[0]), nil)
+    return "", nil, BadRequestError(fmt.Sprintf("Found unknown scope: '%s'.", searchParams.Scopes[0]), nil)
   }
 
   for _, term := range searchParams.Terms {
@@ -121,10 +120,12 @@ func ProcessSearchParams(searchParams *SearchParams) (string, string, string, []
   } else if searchParams.Sort == `name-desc` {
     limitAndOrderBy += `c.name DESC `
   } else {
-    return "", "", "", nil, UnprocessableEntityError(fmt.Sprintf("Bad sort value: '%s'.", searchParams.Sort), nil)
+    return "", nil, UnprocessableEntityError(fmt.Sprintf("Bad sort value: '%s'.", searchParams.Sort), nil)
   }
 
   limitAndOrderBy += `LIMIT ` + strconv.Itoa(pageIndex * itemsPerPage) + `, ` + strconv.Itoa(itemsPerPage)
 
-  return customJoin, customWhere, limitAndOrderBy, params, nil
+  queryStmt := queryBase + customJoin + whereBase + customWhere + limitAndOrderBy
+
+  return queryStmt, params, nil
 }
