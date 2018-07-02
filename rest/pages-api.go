@@ -22,6 +22,16 @@ type SearchParams struct {
   PageInfo *PageInfo `json:"pageInfo"`
 }
 
+func (sp *SearchParams) EnsureSingleScope() (RestError) {
+  if len(sp.Scopes) > 1 {
+    return BadRequestError("We currently only support a single scope.", nil)
+  } else if (len(sp.Scopes) == 0) {
+    return BadRequestError("No scope specified.", nil)
+  } else {
+    return nil
+  }
+}
+
 func ExtractSearchParamsFromUrl(w http.ResponseWriter, r *http.Request) (*SearchParams, RestError) {
   var sp SearchParams
 
