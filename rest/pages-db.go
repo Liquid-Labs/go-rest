@@ -13,6 +13,8 @@ type ResultBuilder func(*sql.Rows) (interface{}, error)
 
 type GeneralSearchWhereBit func(string, string, []interface{}) (string, []interface{}, error)
 
+const CommonListSelect string = `SELECT DISTINCT SQL_CALC_FOUND_ROWS `
+
 func ProcessPageStmt(queryBase string, whereBase string, scopeJoins map[string]string, whereFunc GeneralSearchWhereBit, sortMap map[string]string, searchParams *SearchParams, params []interface{}) (string, []interface{}, RestError) {
   if err := searchParams.EnsureSingleScope(); err != nil {
     return "", nil, err
