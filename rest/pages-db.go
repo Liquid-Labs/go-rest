@@ -1,13 +1,25 @@
 package rest
 
+/**
+ * Build paged list queries to support REST-ful requests.
+ *
+ * The basic idea is to start with a query that results in the 'full list' of
+ * resources and then:
+ * - Apply one or more context scopes. A context scope is determined by the
+ *   requesting URL. E.g., '/mall/xxx/stores' would limit stores selected to the
+ *   the specified 'mall context'. These need not be only sub-items. '/drivers'
+ *   may limit 'persons' who have a 'drivers' relationship.
+ * - Apply any user selected scopes. E.g., 'latest', 'active', 'deleted', etc.
+ * - Apply paging limits.
+ */
+
 import (
+  "context"
   "database/sql"
   "fmt"
-  "net/http"
+  "log"
   "strconv"
   "strings"
-
-  "google.golang.org/appengine"
 )
 
 type ResultBuilder func(*sql.Rows) (interface{}, error)
@@ -18,10 +30,19 @@ type ResultBuilder func(*sql.Rows) (interface{}, error)
  */
 type WhereBitGenerator func(string, []interface{}) (string, []interface{}, error)
 
+/**
+ * Takes a slice of of the current contexts-scopes JoinDatas and returns the
+ * JOIN-clause to use for the user selected scope. If nil, or 'false' returned
+ * then the default 'JoinClause' will be used. This is useful to avoid duplicate
+ * JOIN-clauses.
+ */
+type JoinTest func([]*JoinData) (bool, string)
+
 type JoinData struct {
   JoinClause  string
   WhereClause string
   JoinParams  []interface{}
+  JoinTest    JoinTest
 }
 
 /**
@@ -42,7 +63,7 @@ type PagedQueryParameters struct {
   ContextJoins         []JoinData // Join data based of call context; e.g., '/store/xxx/customers'
   // Plumbing
   Db                   *sql.DB
-  Request              *http.Request
+  Context              context.Context
 }
 
 // TODO: modifying 'SearchParams' paging info should result in warning being included in the final results.
@@ -73,7 +94,16 @@ func PagedQuery(pqp PagedQueryParameters, contextJoins []*JoinData) (interface{}
     if val, ok := pqp.ScopeJoins[scope]; !ok {
       return nil, -1, BadRequestError(fmt.Sprintf("Found unknown scope: '%s'.", pqp.SearchParams.Scopes[0]), nil)
     } else {
-      fromBit += val.JoinClause
+      if val.JoinTest == nil {
+        fromBit += val.JoinClause
+      } else {
+        useIt, override := val.JoinTest(contextJoins)
+        if useIt {
+          fromBit += override
+        } else {
+          fromBit += val.JoinClause
+        }
+      }
       whereBit += val.WhereClause
       params = append(params, val.JoinParams...)
     }
@@ -97,16 +127,13 @@ func PagedQuery(pqp PagedQueryParameters, contextJoins []*JoinData) (interface{}
   itemsPerPage := pqp.SearchParams.PageInfo.ItemsPerPage
 
   // ORDER BY
-  var limitAndOrderBy string
-  if pqp.SearchParams.Sort != "" {
-    limitAndOrderBy = `ORDER BY `
-    if val, ok := pqp.SortMap[pqp.SearchParams.Sort]; !ok {
-      return nil, -1, UnprocessableEntityError(fmt.Sprintf("Bad sort value: '%s'.", pqp.SearchParams.Sort), nil)
-    } else {
-      limitAndOrderBy += val
-    }
+  var limitAndOrderBy string = `ORDER BY `
+  // expects a default order-by keyed to ""
+  log.Printf("%+v\n%+v", pqp, pqp.SearchParams)
+  if val, ok := pqp.SortMap[pqp.SearchParams.Sort]; !ok {
+    return nil, -1, UnprocessableEntityError(fmt.Sprintf("Bad sort value: '%s'.", pqp.SearchParams.Sort), nil)
   } else {
-    limitAndOrderBy = ""
+    limitAndOrderBy += val
   }
 
   limitAndOrderBy += `LIMIT ` + strconv.Itoa(pageIndex * itemsPerPage) + `, ` + strconv.Itoa(itemsPerPage)
@@ -130,7 +157,7 @@ func PagedQuery(pqp PagedQueryParameters, contextJoins []*JoinData) (interface{}
   //
   // Note, we also avoid 'defer' to '.Close()' the rows or '.Rollback()/Commit()'
   // the txn. It generates 'busy buffer' errors when used with a txn.
-  ctx := appengine.NewContext(pqp.Request)
+  ctx := pqp.Context
   txn, err := pqp.Db.BeginTx(ctx, nil)
   if err != nil {
     txn.Rollback()
@@ -140,12 +167,14 @@ func PagedQuery(pqp PagedQueryParameters, contextJoins []*JoinData) (interface{}
   query, err := txn.Prepare(queryStmt)
   if err != nil {
     txn.Rollback()
+    log.Printf("Failed to prepare query:\n%s", queryStmt)
     return nil, 0, ServerError("Could not process " + pqp.ResourceName + " query.", err)
   }
 
   rows, err := query.Query(params...)
   if err != nil {
     txn.Rollback()
+    log.Printf("Failed to execute query:\n%s\nParameters:%v", queryStmt, params)
     return nil, 0, ServerError("Could not retrieve " + pqp.ResourceName + ".", err)
   }
 
