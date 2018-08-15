@@ -23,6 +23,11 @@ var nullTime, _ = time.Parse(time.RFC3339, "0000-00-00T00:00:00Z00:00")
 
 type NullInt64 sql.NullInt64
 
+type Nullable interface{
+  IsEmpty() (bool)
+  IsValid() (bool)
+}
+
 func (ni *NullInt64) Scan(value interface{}) error {
 	var i sql.NullInt64
 	if err := i.Scan(value); err != nil {
@@ -59,6 +64,15 @@ func (ni *NullInt64) UnmarshalJSON(b []byte) error {
 func (ni* NullInt64) Native() *sql.NullInt64 {
   return &sql.NullInt64{Int64: ni.Int64, Valid: ni.Valid}
 }
+
+func (n* NullInt64) IsEmpty() (bool) {
+  return !n.Valid
+}
+
+func (n* NullInt64) IsValid() (bool) {
+  return n.Valid
+}
+
 // END: Null64Int handlers
 
 type NullBool sql.NullBool
@@ -99,6 +113,14 @@ func (nb *NullBool) UnmarshalJSON(b []byte) error {
 
 func (nb* NullBool) Native() *sql.NullBool {
   return &sql.NullBool{Bool: nb.Bool, Valid: nb.Valid}
+}
+
+func (n* NullBool) IsEmpty() (bool) {
+  return !n.Valid
+}
+
+func (n* NullBool) IsValid() (bool) {
+  return n.Valid
 }
 // END NullBool handlers
 
@@ -141,6 +163,14 @@ func (nf *NullFloat64) UnmarshalJSON(b []byte) error {
 func (nf* NullFloat64) Native() *sql.NullFloat64 {
   return &sql.NullFloat64{Float64: nf.Float64, Valid: nf.Valid}
 }
+
+func (n* NullFloat64) IsEmpty() (bool) {
+  return !n.Valid
+}
+
+func (n* NullFloat64) IsValid() (bool) {
+  return n.Valid
+}
 // END NullFloat64 handlers
 
 // NullString is an alias for sql.NullString data type
@@ -182,6 +212,14 @@ func (ns *NullString) UnmarshalJSON(b []byte) error {
 
 func (ns* NullString) Native() *sql.NullString {
   return &sql.NullString{String: ns.String, Valid: ns.Valid}
+}
+
+func (n* NullString) IsEmpty() (bool) {
+  return !n.Valid || n.String == ""
+}
+
+func (n* NullString) IsValid() (bool) {
+  return n.Valid
 }
 // END NullString handlers
 
@@ -233,6 +271,14 @@ func (nt *NullTime) UnmarshalJSON(b []byte) error {
 
 func (nt* NullTime) Native() *mysql.NullTime {
   return &mysql.NullTime{Time: nt.Time, Valid: nt.Valid}
+}
+
+func (n* NullTime) IsEmpty() (bool) {
+  return !n.Valid
+}
+
+func (n* NullTime) IsValid() (bool) {
+  return n.Valid
 }
 // END NullTime handlers
 
@@ -301,5 +347,13 @@ func (nd *NullDate) UnmarshalJSON(b []byte) error {
 
 func (nd* NullDate) Native() *sql.NullString {
   return &sql.NullString{String: nd.String, Valid: nd.Valid}
+}
+
+func (n* NullDate) IsEmpty() (bool) {
+  return !n.Valid
+}
+
+func (n* NullDate) IsValid() (bool) {
+  return n.Valid
 }
 // END NullDate handlers
