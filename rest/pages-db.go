@@ -38,6 +38,7 @@ type WhereBitGenerator func(string, []interface{}) (string, []interface{}, error
  */
 type JoinTest func([]*JoinData) (bool, string)
 
+// TODO: JoinTest -> JoinFunc?
 type JoinData struct {
   JoinClause  string
   WhereClause string
@@ -129,7 +130,6 @@ func PagedQuery(pqp PagedQueryParameters, contextJoins []*JoinData) (interface{}
   // ORDER BY
   var limitAndOrderBy string = `ORDER BY `
   // expects a default order-by keyed to ""
-  log.Printf("%+v\n%+v", pqp, pqp.SearchParams)
   if val, ok := pqp.SortMap[pqp.SearchParams.Sort]; !ok {
     return nil, -1, UnprocessableEntityError(fmt.Sprintf("Bad sort value: '%s'.", pqp.SearchParams.Sort), nil)
   } else {
