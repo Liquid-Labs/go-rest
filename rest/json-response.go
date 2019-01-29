@@ -2,11 +2,8 @@ package rest
 
 import (
   "encoding/json"
-  "fmt"
   "log"
   "net/http"
-
-  "google.golang.org/appengine"
 )
 
 type standardResponse struct {
@@ -37,26 +34,14 @@ func HandleError(w http.ResponseWriter, err RestError) (RestError) {
   // Note that ultimately, we want to encode the error in JSON, but it was
   // proving problematic, so for now it's just text.
   if err.Code() == http.StatusInternalServerError {
-    // TODO: hide error and give reference number
     log.Printf("ERROR: %+v", err.Cause()) // Log server/untyped errors.
-  } else if appengine.IsDevAppServer() {
+  } else if GetEnvPurpose() != `production` {
     log.Printf("%+v", err)
     log.Printf("%+v", err.Cause())
   }
 
+  // TODO: hide error and give reference number
   http.Error(w, err.Error(), err.Code())
 
   return err
-}
-
-func ExtractJson(w http.ResponseWriter, r *http.Request, d interface{}, dDesc string) error {
-  decoder := json.NewDecoder(r.Body)
-
-  if err := decoder.Decode(d); err != nil {
-    HandleError(w, UnprocessableEntityError(fmt.Sprintf("Could not decode payload: %s", dDesc), err))
-    return err
-  }
-  defer r.Body.Close()
-
-  return nil
 }
