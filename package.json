@@ -1,0 +1,13 @@
+{
+  "name": "go-rest",
+  "version": "0.1.0",
+  "description": "Toolbox for REST-ful APIs including paging, search, and standardized responses.",
+  "scripts": {
+    "build": "cd rest && go build",
+    "prepare": "npm run build && cd rest && go test all",
+    "show-coverage": "cd nulls && go test -coverprofile=coverage.out && go tool cover -html=coverage.out",
+    "test": "cd rest && go test"
+  },
+  "author": "Zane Rockenbaugh <zane@liquid-labs.com>",
+  "license": "ISC"
+}
