@@ -37,6 +37,7 @@ func annotateError(cause error) error {
   pc, fn, line, _ := runtime.Caller(2)
   return errors.New(fmt.Sprintf("(%s[%s:%d]) %s", runtime.FuncForPC(pc).Name(), fn, line, cause))
 }
+
 func BadRequestError(message string, cause error) errorData {
   return errorData{message, http.StatusBadRequest, annotateError(cause)}
 }
