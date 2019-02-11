@@ -38,11 +38,15 @@ func annotateError(cause error) error {
   return errors.New(fmt.Sprintf("(%s[%s:%d]) %s", runtime.FuncForPC(pc).Name(), fn, line, cause))
 }
 
+
 func BadRequestError(message string, cause error) errorData {
   return errorData{message, http.StatusBadRequest, annotateError(cause)}
 }
 func AuthorizationError(message string, cause error) errorData {
   return errorData{message, http.StatusUnauthorized, annotateError(cause)}
+}
+func NotFoundError(message string, cause error) errorData {
+  return errorData{message, http.StatusNotFound, annotateError(cause)}
 }
 func UnprocessableEntityError(message string, cause error) errorData {
   return errorData{message, http.StatusUnprocessableEntity, annotateError(cause)}
