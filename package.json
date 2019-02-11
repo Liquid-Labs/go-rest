@@ -1,6 +1,6 @@
 {
   "name": "go-rest",
-  "version": "0.1.1-prototype.0",
+  "version": "1.0.0-0",
   "description": "Toolbox for REST-ful APIs including paging, search, and standardized responses.",
   "scripts": {
     "build": "cd rest && go build",
