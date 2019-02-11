@@ -4,7 +4,7 @@
   "description": "Toolbox for REST-ful APIs including paging, search, and standardized responses.",
   "scripts": {
     "build": "cd rest && go build",
-    "prepare": "npm run build && cd rest && go test all",
+    "prepare": "go test ./rest",
     "show-coverage": "cd nulls && go test -coverprofile=coverage.out && go tool cover -html=coverage.out",
     "test": "cd rest && go test"
   },
