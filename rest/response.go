@@ -16,6 +16,7 @@ type PageInfo struct {
 }
 
 type SearchParams struct {
+  // TODO: do we use scopes?
   Scopes   []string  `json:"scopes"`
   Terms    []string  `json:"terms"`
   Sort     string    `json:"sort"`
