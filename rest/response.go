@@ -5,6 +5,8 @@ import (
   "log"
   "net/http"
   "os"
+
+  "github.com/Liquid-Labs/terror/go/terror"
 )
 
 type PageInfo struct {
@@ -23,11 +25,11 @@ type SearchParams struct {
   PageInfo *PageInfo `json:"pageInfo"`
 }
 
-func (sp *SearchParams) EnsureSingleScope() (RestError) {
+func (sp *SearchParams) EnsureSingleScope() (terror.Terror) {
   if len(sp.Scopes) > 1 {
-    return BadRequestError("We currently only support a single scope.", nil)
+    return terror.BadRequestError("We currently only support a single scope.", nil)
   } else if (len(sp.Scopes) == 0) {
-    return BadRequestError("No scope specified.", nil)
+    return terror.BadRequestError("No scope specified.", nil)
   } else {
     return nil
   }
@@ -57,7 +59,7 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string, sear
   var respBody []byte
   var err error
   if respBody, err = json.Marshal(resp); err != nil {
-    restErr := ServerError("Could not format response.", err)
+    restErr := terror.ServerError("Could not format response.", err)
     HandleError(w, restErr)
 
     return restErr
@@ -67,7 +69,7 @@ func StandardResponse(w http.ResponseWriter, d interface{}, message string, sear
   return nil
 }
 
-func HandleError(w http.ResponseWriter, err RestError) (RestError) {
+func HandleError(w http.ResponseWriter, err terror.Terror) (terror.Terror) {
   // Note that ultimately, we want to encode the error in JSON, but it was
   // proving problematic, so for now it's just text.
   if err.Code() == http.StatusInternalServerError {
