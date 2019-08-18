@@ -12,7 +12,7 @@ func ExtractJson(w http.ResponseWriter, r *http.Request, d interface{}, dDesc st
   decoder := json.NewDecoder(r.Body)
 
   if err := decoder.Decode(d); err != nil {
-    restErr := terror.UnprocessableEntityError(fmt.Sprintf("Could not decode payload: %s", dDesc), err)
+    restErr := terror.UnprocessableEntityError(fmt.Sprintf("Could not decode payload: %s (%s)", dDesc, err))
     HandleError(w, restErr)
     return restErr
   }

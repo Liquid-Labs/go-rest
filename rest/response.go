@@ -27,9 +27,9 @@ type SearchParams struct {
 
 func (sp *SearchParams) EnsureSingleScope() (terror.Terror) {
   if len(sp.Scopes) > 1 {
-    return terror.BadRequestError("We currently only support a single scope.", nil)
+    return terror.BadRequestError("We currently only support a single scope.")
   } else if (len(sp.Scopes) == 0) {
-    return terror.BadRequestError("No scope specified.", nil)
+    return terror.BadRequestError("No scope specified.")
   } else {
     return nil
   }
