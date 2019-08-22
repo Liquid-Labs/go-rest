@@ -1,6 +1,6 @@
 {
   "name": "@liquid-labs/go-rest",
-  "version": "1.0.0-prototype.4",
+  "version": "1.0.0-prototype.5",
   "description": "Toolbox for REST-ful APIs including paging, search, and standardized responses.",
   "scripts": {
     "build": "cd rest && go build",
