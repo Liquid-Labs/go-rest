@@ -3,6 +3,8 @@ github.com/Liquid-Labs/terror v0.0.0-20190801223730-3f5389af3ff2 h1:8U/guTtnLJN/
 github.com/Liquid-Labs/terror v0.0.0-20190801223730-3f5389af3ff2/go.mod h1:MrllZ172GtwBFSm+HOpKcctvbVsN1L7Sul0KgOzw+nY=
 github.com/Liquid-Labs/terror v1.0.0-alpha.1 h1:5kbQpXE/QSCCR6+OD7ztS9Ds2hwLGX/QD1vEtZxY6uc=
 github.com/Liquid-Labs/terror v1.0.0-alpha.1/go.mod h1:wMGAoo0XgqFh92eVSBtcvSaGtP/A8ZjrCYVD0GU2oPM=
+github.com/Liquid-Labs/terror v1.0.0-alpha.2 h1:IlesZ5GXa+jEtrnz+ws66Anz/5R4Sv7O/ywySqQAUgI=
+github.com/Liquid-Labs/terror v1.0.0-alpha.2/go.mod h1:wMGAoo0XgqFh92eVSBtcvSaGtP/A8ZjrCYVD0GU2oPM=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
